@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+#
+# Author: Efehan Cekic [efehan.cekic@student.htw-berlin.de]
+#
+ -->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="apmngm-backend-0.0.3-file-metadata" author="efehan.cekic@student.htw-berlin.de">
+        <createTable tableName="file_metadata">
+            <column name="id" type="char(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="file_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="size" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_path" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="apmngm-backend-0.0.3-file-metadata-indexes" author="efehan.cekic@student.htw-berlin.de">
+        <createIndex tableName="file_metadata" indexName="IDX_FILE_METADATA_CREATED_AT">
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex tableName="file_metadata" indexName="IDX_FILE_METADATA_FILE_NAME">
+            <column name="file_name"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

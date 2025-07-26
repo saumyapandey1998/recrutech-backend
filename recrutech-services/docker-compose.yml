@@ -22,6 +22,27 @@ services:
     networks:
       - recrutech-network
 
+  # MinIO Object Storage Service
+  minio:
+    image: minio/minio:latest
+    container_name: recrutech-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - recrutech-network
+
   # Recrutech Platform Application Service
   app:
     build:
@@ -31,18 +52,23 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/recrutech_service?createDatabaseIfNotExist=true
       - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_APPLICATION_JSON={"minio":{"endpoint":"http://minio:9000","access-key":"minioadmin","secret-key":"minioadmin","bucket-name":"recrutech-files"}}
     networks:
       - recrutech-network
 
 # Volumes for data persistence
 volumes:
   mysql-data:
+    driver: local
+  minio-data:
     driver: local
 
 # Network configuration

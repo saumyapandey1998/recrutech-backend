@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+#
+# Author: Efehan Cekic [efehan.cekic@student.htw-berlin.de]
+#
+ -->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="apmngm-backend-0.0.2-application" author="efehan.cekic@student.htw-berlin.de">
+        <createTable tableName="application">
+            <column name="id" type="char(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="cv_file_id" type="char(36)"/>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="viewed_by_hr" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="job_id" type="char(36)">
+                <constraints nullable="false" foreignKeyName="fk_application_job" references="job(id)"/>
+            </column>
+            <column name="created_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="apmngm-backend-0.0.2-application-indexes" author="efehan.cekic@student.htw-berlin.de">
+        <createIndex tableName="application" indexName="IDX_APPLICATION_JOB_ID">
+            <column name="job_id"/>
+        </createIndex>
+        <createIndex tableName="application" indexName="IDX_APPLICATION_STATUS">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="application" indexName="IDX_APPLICATION_CREATED_AT">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

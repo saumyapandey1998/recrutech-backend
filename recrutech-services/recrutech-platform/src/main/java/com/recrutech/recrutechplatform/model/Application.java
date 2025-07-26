@@ -2,8 +2,7 @@ package com.recrutech.recrutechplatform.model;
 
 import com.recrutech.common.entity.BaseEntity;
 import com.recrutech.recrutechplatform.enums.ApplicationStatus;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +12,20 @@ import lombok.Setter;
 @Setter
 public class Application extends BaseEntity {
 
-    String cvFileId;
-    ApplicationStatus status = ApplicationStatus.RECEIVED;
-    boolean viewedByHr;
+    @Column(name = "cv_file_id", columnDefinition = "char", length = 36)
+    private String cvFileId;
+
+    @Enumerated(EnumType.STRING)
+    private ApplicationStatus status;
+
+    private boolean viewedByHr;
+
+    @ManyToOne
+    @JoinColumn(name = "job_id")
+    private Job job;
+
+    @PrePersist
+    protected void onCreate() {
+        initializeEntity();
+    }
 }

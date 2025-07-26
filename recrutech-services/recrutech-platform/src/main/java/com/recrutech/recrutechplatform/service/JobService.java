@@ -15,35 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * Service class for managing job-related operations.
- * This service provides methods for creating, retrieving, updating, and deleting jobs,
- * as well as handling the validation and business logic for these operations.
- */
 @Service
 @Slf4j
 public class JobService {
 
     private final JobRepository jobRepository;
 
-    /**
-     * Constructs a new JobService with the required dependencies.
-     *
-     * @param jobRepository the repository for job data access
-     */
     @Autowired
     public JobService(JobRepository jobRepository) {
         this.jobRepository = jobRepository;
     }
 
-    /**
-     * Finds a job by its ID or throws a NotFoundException if not found.
-     *
-     * @param id the ID of the job to find
-     * @param operation the operation being performed (for error messages)
-     * @return the found job
-     * @throws NotFoundException if the job is not found
-     */
     private Job findJobByIdOrThrow(String id, String operation) {
         return jobRepository.findById(id)
                 .orElseThrow(() -> {
@@ -52,13 +34,6 @@ public class JobService {
                 });
     }
 
-    /**
-     * Creates a new job based on the provided request.
-     *
-     * @param jobRequest the job request containing job details
-     * @return the created job response
-     * @throws ValidationException if the job request is invalid
-     */
     @Transactional
     public JobResponse createJob(JobRequest jobRequest) {
         log.debug("Creating new job with title: {}", jobRequest.title());
