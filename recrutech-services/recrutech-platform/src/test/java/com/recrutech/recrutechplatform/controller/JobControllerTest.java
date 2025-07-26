@@ -2,9 +2,9 @@ package com.recrutech.recrutechplatform.controller;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.recrutech.recrutechplatform.dto.JobRequest;
-import com.recrutech.recrutechplatform.dto.JobResponse;
-import com.recrutech.recrutechplatform.dto.JobSummaryResponse;
+import com.recrutech.recrutechplatform.dto.job.JobRequest;
+import com.recrutech.recrutechplatform.dto.job.JobResponse;
+import com.recrutech.recrutechplatform.dto.job.JobSummaryResponse;
 import com.recrutech.common.exception.NotFoundException;
 import com.recrutech.recrutechplatform.service.JobService;
 import org.junit.jupiter.api.BeforeEach;

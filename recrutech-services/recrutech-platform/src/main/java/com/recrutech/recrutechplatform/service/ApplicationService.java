@@ -2,8 +2,8 @@ package com.recrutech.recrutechplatform.service;
 
 import com.recrutech.common.exception.NotFoundException;
 import com.recrutech.common.util.UuidValidator;
-import com.recrutech.recrutechplatform.dto.ApplicationRequest;
-import com.recrutech.recrutechplatform.dto.ApplicationResponse;
+import com.recrutech.recrutechplatform.dto.application.ApplicationRequest;
+import com.recrutech.recrutechplatform.dto.application.ApplicationResponse;
 import com.recrutech.recrutechplatform.enums.ApplicationStatus;
 import com.recrutech.recrutechplatform.model.Application;
 import com.recrutech.recrutechplatform.model.Job;

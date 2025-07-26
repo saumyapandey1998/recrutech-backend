@@ -1,4 +1,4 @@
-package com.recrutech.recrutechplatform.dto;
+package com.recrutech.recrutechplatform.dto.file;
 
 import lombok.Builder;
 import lombok.Data;

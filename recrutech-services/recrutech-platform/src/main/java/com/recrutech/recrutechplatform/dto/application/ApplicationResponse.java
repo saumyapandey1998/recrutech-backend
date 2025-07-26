@@ -1,4 +1,4 @@
-package com.recrutech.recrutechplatform.dto;
+package com.recrutech.recrutechplatform.dto.application;
 
 import com.recrutech.recrutechplatform.enums.ApplicationStatus;
 import lombok.Builder;

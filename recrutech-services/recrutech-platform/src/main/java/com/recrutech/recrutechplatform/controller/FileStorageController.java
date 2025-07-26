@@ -1,6 +1,6 @@
 package com.recrutech.recrutechplatform.controller;
 
-import com.recrutech.recrutechplatform.dto.FileMetadataResponse;
+import com.recrutech.recrutechplatform.dto.file.FileMetadataResponse;
 import com.recrutech.recrutechplatform.model.FileMetadata;
 import com.recrutech.recrutechplatform.service.FileStorageService;
 import org.springframework.core.io.Resource;
@@ -9,10 +9,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
 
 /**
  * Controller for handling file storage operations.

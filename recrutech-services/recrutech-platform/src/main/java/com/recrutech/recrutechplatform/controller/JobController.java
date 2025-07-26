@@ -1,8 +1,8 @@
 package com.recrutech.recrutechplatform.controller;
 
-import com.recrutech.recrutechplatform.dto.JobRequest;
-import com.recrutech.recrutechplatform.dto.JobResponse;
-import com.recrutech.recrutechplatform.dto.JobSummaryResponse;
+import com.recrutech.recrutechplatform.dto.job.JobRequest;
+import com.recrutech.recrutechplatform.dto.job.JobResponse;
+import com.recrutech.recrutechplatform.dto.job.JobSummaryResponse;
 import com.recrutech.recrutechplatform.service.JobService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

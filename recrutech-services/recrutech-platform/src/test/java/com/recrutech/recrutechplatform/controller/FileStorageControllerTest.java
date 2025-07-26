@@ -1,6 +1,5 @@
 package com.recrutech.recrutechplatform.controller;
 
-import com.recrutech.recrutechplatform.dto.FileMetadataResponse;
 import com.recrutech.recrutechplatform.model.FileMetadata;
 import com.recrutech.recrutechplatform.service.FileStorageService;
 import org.junit.jupiter.api.Test;

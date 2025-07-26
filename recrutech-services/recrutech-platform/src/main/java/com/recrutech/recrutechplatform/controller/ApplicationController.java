@@ -1,7 +1,7 @@
 package com.recrutech.recrutechplatform.controller;
 
-import com.recrutech.recrutechplatform.dto.ApplicationRequest;
-import com.recrutech.recrutechplatform.dto.ApplicationResponse;
+import com.recrutech.recrutechplatform.dto.application.ApplicationRequest;
+import com.recrutech.recrutechplatform.dto.application.ApplicationResponse;
 import com.recrutech.recrutechplatform.service.ApplicationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

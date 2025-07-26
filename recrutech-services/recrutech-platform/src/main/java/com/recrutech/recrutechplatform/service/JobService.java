@@ -1,8 +1,8 @@
 package com.recrutech.recrutechplatform.service;
 
-import com.recrutech.recrutechplatform.dto.JobRequest;
-import com.recrutech.recrutechplatform.dto.JobResponse;
-import com.recrutech.recrutechplatform.dto.JobSummaryResponse;
+import com.recrutech.recrutechplatform.dto.job.JobRequest;
+import com.recrutech.recrutechplatform.dto.job.JobResponse;
+import com.recrutech.recrutechplatform.dto.job.JobSummaryResponse;
 import com.recrutech.common.exception.NotFoundException;
 import com.recrutech.common.exception.ValidationException;
 import com.recrutech.common.validator.JobValidator;
