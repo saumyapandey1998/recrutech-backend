@@ -1,0 +1,201 @@
+package com.recrutech.recrutechplatform.service;
+
+import com.recrutech.recrutechplatform.dto.JobRequest;
+import com.recrutech.recrutechplatform.dto.JobResponse;
+import com.recrutech.recrutechplatform.dto.JobSummaryResponse;
+import com.recrutech.common.exception.NotFoundException;
+import com.recrutech.common.exception.ValidationException;
+import com.recrutech.common.validator.JobValidator;
+import com.recrutech.recrutechplatform.model.Job;
+import com.recrutech.recrutechplatform.repository.JobRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/**
+ * Service class for managing job-related operations.
+ * This service provides methods for creating, retrieving, updating, and deleting jobs,
+ * as well as handling the validation and business logic for these operations.
+ */
+@Service
+@Slf4j
+public class JobService {
+
+    private final JobRepository jobRepository;
+
+    /**
+     * Constructs a new JobService with the required dependencies.
+     *
+     * @param jobRepository the repository for job data access
+     */
+    @Autowired
+    public JobService(JobRepository jobRepository) {
+        this.jobRepository = jobRepository;
+    }
+
+    /**
+     * Finds a job by its ID or throws a NotFoundException if not found.
+     *
+     * @param id the ID of the job to find
+     * @param operation the operation being performed (for error messages)
+     * @return the found job
+     * @throws NotFoundException if the job is not found
+     */
+    private Job findJobByIdOrThrow(String id, String operation) {
+        return jobRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Job with id {} not found for {}", id, operation);
+                    return new NotFoundException("Job not found with id: " + id);
+                });
+    }
+
+    /**
+     * Creates a new job based on the provided request.
+     *
+     * @param jobRequest the job request containing job details
+     * @return the created job response
+     * @throws ValidationException if the job request is invalid
+     */
+    @Transactional
+    public JobResponse createJob(JobRequest jobRequest) {
+        log.debug("Creating new job with title: {}", jobRequest.title());
+
+        JobValidator.requireNonNull(jobRequest);
+        JobValidator.validateJobData(jobRequest.title(), jobRequest.description(), jobRequest.location());
+
+        Job job = Job.builder()
+                .title(jobRequest.title())
+                .description(jobRequest.description())
+                .location(jobRequest.location())
+                .active(jobRequest.active() != null ? jobRequest.active() : true)
+                .build();
+
+        Job savedJob = jobRepository.save(job);
+        log.info("Job created successfully with id: {}", savedJob.getId());
+
+        return mapToJobResponse(savedJob);
+    }
+
+    /**
+     * Retrieves all jobs with summary information (id, title, location).
+     *
+     * @return a list of all jobs with summary information
+     */
+    @Transactional(readOnly = true)
+    public List<JobSummaryResponse> findAllJobs() {
+        log.debug("Retrieving all jobs");
+        List<Job> jobs = jobRepository.findAll();
+        log.info("Retrieved {} jobs", jobs.size());
+
+        return jobs.stream()
+                .map(this::mapToJobSummaryResponse)
+                .toList();
+    }
+
+    /**
+     * Retrieves a job by its ID with full details.
+     *
+     * @param id the ID of the job to retrieve
+     * @return the job response with full details
+     * @throws ValidationException if the ID is invalid
+     * @throws NotFoundException if the job is not found
+     */
+    @Transactional(readOnly = true)
+    public JobResponse findJobById(String id) {
+        log.debug("Retrieving job with id: {}", id);
+
+        JobValidator.validateId(id);
+        Job job = findJobByIdOrThrow(id, "retrieval");
+
+        log.info("Retrieved job with id: {}", id);
+        return mapToJobResponse(job);
+    }
+
+    /**
+     * Deletes a job by its ID.
+     *
+     * @param id the ID of the job to delete
+     * @throws ValidationException if the ID is invalid
+     * @throws NotFoundException if the job is not found
+     */
+    @Transactional
+    public void deleteJobById(String id) {
+        log.debug("Deleting job with id: {}", id);
+
+        JobValidator.validateId(id);
+
+        // Verify the job exists before deletion
+        findJobByIdOrThrow(id, "deletion");
+
+        jobRepository.deleteById(id);
+        log.info("Job with id {} deleted successfully", id);
+    }
+
+    /**
+     * Updates a job with the provided details.
+     *
+     * @param id the ID of the job to update
+     * @param jobRequest the job request containing updated job details
+     * @return the updated job response
+     * @throws ValidationException if the job request or ID is invalid
+     * @throws NotFoundException if the job is not found
+     */
+    @Transactional
+    public JobResponse updateJob(String id, JobRequest jobRequest) {
+        log.debug("Updating job with id: {}", id);
+
+        JobValidator.validateId(id);
+        JobValidator.requireNonNull(jobRequest);
+        JobValidator.validateJobData(jobRequest.title(), jobRequest.description(), jobRequest.location());
+
+        Job job = findJobByIdOrThrow(id, "update");
+
+        // Update job properties
+        job.setTitle(jobRequest.title());
+        job.setDescription(jobRequest.description());
+        job.setLocation(jobRequest.location());
+
+        if (jobRequest.active() != null) {
+            job.setActive(jobRequest.active());
+        }
+
+        Job updatedJob = jobRepository.save(job);
+        log.info("Job with id {} updated successfully", id);
+
+        return mapToJobResponse(updatedJob);
+    }
+
+    /**
+     * Maps a Job entity to a JobResponse DTO.
+     *
+     * @param job the job entity to map
+     * @return the job response DTO
+     */
+    private JobResponse mapToJobResponse(Job job) {
+        return new JobResponse(
+                job.getId(),
+                job.getTitle(),
+                job.getDescription(),
+                job.getLocation(),
+                job.isActive()
+        );
+    }
+
+    /**
+     * Maps a Job entity to a JobSummaryResponse DTO.
+     *
+     * @param job the job entity to map
+     * @return the job summary response DTO
+     */
+    private JobSummaryResponse mapToJobSummaryResponse(Job job) {
+        return new JobSummaryResponse(
+                job.getId(),
+                job.getTitle(),
+                job.getLocation()
+        );
+    }
+
+}
