@@ -1,0 +1,13 @@
+# Füge diese Zeilen zu deiner .gitignore-Datei hinzu
+# Sensible Daten
+*.pem
+*.key
+*.p12
+*.jks
+**/application-prod.properties
+**/application-dev.properties
+.env
+private-recrutech-pkcs8_enc.pem
+
+# Ausnahme für öffentliche Schlüssel, falls diese geteilt werden sollen
+!**/public.pem

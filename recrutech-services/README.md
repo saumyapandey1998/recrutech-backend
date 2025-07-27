@@ -1,65 +1,100 @@
-# Recrutech Backend Application
+# RecruTech Services
 
-This README provides instructions on how to run the Recrutech Backend application in different environments.
+This directory contains the Docker configuration for running the RecruTech platform services.
 
-## Prerequisites
+## Services
 
-- Docker and Docker Compose
+The docker-compose.yml file in this directory configures the following services:
 
-## Quick Start (Recommended)
+1. **MySQL Database** - Stores the application data
+2. **MinIO Object Storage** - Handles file storage
+3. **RecruTech Platform Application** - The main application service
 
-To start the application with Docker:
+## Running the Services
+
+### Prerequisites
+
+- Docker and Docker Compose installed on your system
+- Java 21 and Maven (if building locally)
+
+### Starting the Services
 
 1. Navigate to the recrutech-services directory:
-   ```bash
+   ```
    cd recrutech-services
    ```
 
 2. Start the Docker containers:
-   ```bash
+   ```
    docker-compose up -d
    ```
 
    This will:
-   - Build the application inside Docker (no local Java or Maven required)
-   - Start all necessary containers (MySQL and the application)
-   - The application will be available at http://localhost:8080
+   - Start a MySQL database on port 3306
+   - Start a MinIO object storage service on ports 9000 and 9001
+   - Build and start the platform application on port 8080
+   - Connect the services using a Docker network
 
-   You can also run in foreground mode to see the logs:
-   ```bash
-   docker-compose up
+3. To view logs:
+   ```
+   docker-compose logs -f
    ```
 
-## Alternative Start Options
+4. To stop the containers:
+   ```
+   docker-compose down
+   ```
 
-### Running Locally (Without Docker)
+### Accessing the Services
 
-If you prefer to start the application manually without Docker, please refer to [README_MANUAL_START.md](README_MANUAL_START.md).
+Once started, the services will be available at:
+- Platform Application: http://localhost:8080
+- MinIO Console: http://localhost:9001 (login with minioadmin/minioadmin)
 
-## Stopping the Application
+## Configuration
 
-To stop the Docker containers:
-```bash
-cd recrutech-services
-docker-compose down
-```
-
-If you want to remove the MySQL data volume as well:
-```bash
-cd recrutech-services
-docker-compose down -v
-```
+The following environment variables are set in the docker-compose.yml file:
+- SPRING_DATASOURCE_URL: Database connection URL
+- SPRING_DATASOURCE_USERNAME: Database username
+- SPRING_DATASOURCE_PASSWORD: Database password
+- SPRING_APPLICATION_JSON: MinIO configuration
 
 ## Troubleshooting
 
-### Database Connection Issues
+If you encounter issues:
 
-If you encounter database connection issues, make sure:
+1. Check the logs:
+   ```
+   docker-compose logs app
+   docker-compose logs mysql
+   docker-compose logs minio
+   ```
 
-1. MySQL is running and accessible
-2. The database name, username, and password match the configuration
-3. The hostname is correct:
-   - Use `localhost` when running the application directly on your machine
-   - Use `mysql` when running with Docker Compose
+2. Verify all services are running:
+   ```
+   docker-compose ps
+   ```
 
-The application is configured to use `localhost` in the application.properties file, which is suitable for local development. When running with Docker Compose, the environment variables in the docker-compose.yml file override these settings to use the correct hostname within the Docker network.
+3. Check if the ports are available:
+   ```
+   netstat -an | findstr "3306 8080 9000 9001"
+   ```
+
+4. If the application fails to connect to MySQL, you may need to wait a bit longer for MySQL to initialize fully.
+
+5. If you need to rebuild the application:
+   ```
+   docker-compose build --no-cache app
+   docker-compose up -d
+   ```
+
+## Running with Auth Service
+
+If you also need to run the auth service, you can do so by navigating to the recrutech-auth directory and running its docker-compose file:
+
+```
+cd recrutech-auth
+docker-compose up -d
+```
+
+The auth service will be available at http://localhost:8082/api and uses a separate MySQL instance on port 3307.

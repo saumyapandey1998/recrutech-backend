@@ -21,6 +21,7 @@ services:
       retries: 5
     networks:
       - recrutech-network
+    restart: always
 
   # MinIO Object Storage Service
   minio:
@@ -42,6 +43,7 @@ services:
       retries: 5
     networks:
       - recrutech-network
+    restart: always
 
   # Recrutech Platform Application Service
   app:
@@ -57,12 +59,13 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/recrutech_service?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/recrutech_service?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=password
       - SPRING_APPLICATION_JSON={"minio":{"endpoint":"http://minio:9000","access-key":"minioadmin","secret-key":"minioadmin","bucket-name":"recrutech-files"}}
     networks:
       - recrutech-network
+    restart: always
 
 # Volumes for data persistence
 volumes:
