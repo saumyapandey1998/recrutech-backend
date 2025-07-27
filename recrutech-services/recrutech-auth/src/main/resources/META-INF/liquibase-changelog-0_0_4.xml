@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Enhance refresh_tokens table with additional security and tracking fields -->
+    <changeSet id="0.0.4-1" author="auth-service">
+        <!-- Add last_used_at timestamp column -->
+        <addColumn tableName="refresh_tokens">
+            <column name="last_used_at" type="TIMESTAMP" defaultValueComputed="NULL">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Add ip_address column -->
+        <addColumn tableName="refresh_tokens">
+            <column name="ip_address" type="VARCHAR(45)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Add user_agent column -->
+        <addColumn tableName="refresh_tokens">
+            <column name="user_agent" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Create index on last_used_at for performance optimization -->
+        <createIndex indexName="idx_refresh_token_last_used_at" tableName="refresh_tokens">
+            <column name="last_used_at"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Add comments to explain the purpose of the new columns -->
+    <changeSet id="0.0.4-2" author="auth-service">
+        <setColumnRemarks tableName="refresh_tokens" columnName="last_used_at" columnDataType="TIMESTAMP" remarks="Timestamp when the token was last used for authentication"/>
+        <setColumnRemarks tableName="refresh_tokens" columnName="ip_address" columnDataType="VARCHAR(45)" remarks="IP address from which the token was last used"/>
+        <setColumnRemarks tableName="refresh_tokens" columnName="user_agent" columnDataType="VARCHAR(255)" remarks="Browser or device information from which the token was last used"/>
+    </changeSet>
+
+</databaseChangeLog>

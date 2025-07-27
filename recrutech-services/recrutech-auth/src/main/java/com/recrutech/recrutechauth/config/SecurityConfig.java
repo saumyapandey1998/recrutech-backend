@@ -1,11 +1,14 @@
 package com.recrutech.recrutechauth.config;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,35 +28,43 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.security.KeyPair;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Security configuration for the application.
  * This class configures Spring Security with JWT authentication.
+ * Uses an asymmetric key (RSA) approach for enhanced security.
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final RSAPublicKey publicKey;
-    private final RSAPrivateKey privateKey;
+    private final KeyPair keyPair;
+    private final String jwtId;
+    
+    @Value("${app.cors.allowed-origins:http://localhost:3000}")
+    private String allowedOrigins;
 
     /**
      * Constructor for SecurityConfig.
      *
-     * @param publicKey the RSA public key
-     * @param privateKey the RSA private key
+     * @param keyPair the RSA key pair for JWT signing and verification
+     * @param jwtId the JWT ID for token identification
      */
-    public SecurityConfig(RSAPublicKey publicKey, RSAPrivateKey privateKey) {
-        this.publicKey = publicKey;
-        this.privateKey = privateKey;
+    public SecurityConfig(KeyPair keyPair, String jwtId) {
+        this.keyPair = keyPair;
+        this.jwtId = jwtId;
     }
 
     /**
@@ -66,17 +77,35 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(AbstractHttpConfigurer::disable)
+                // Enable CSRF protection with cookie-based token repository
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        // Disable CSRF for authentication endpoints
+                        .ignoringRequestMatchers("/auth/**")
+                )
+                // Configure CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // Configure authorization rules
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**", "/test/public").permitAll()
                         .anyRequest().authenticated()
                 )
+                // Configure session management
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Configure OAuth2 resource server with JWT
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                // Configure exception handling
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
                         .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
+                )
+                // Configure security headers
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; frame-ancestors 'self'; form-action 'self'"))
+                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        .frameOptions(frame -> frame.deny())
+                        .xssProtection(Customizer.withDefaults())
+                        .contentTypeOptions(Customizer.withDefaults())
                 )
                 .build();
     }
@@ -88,28 +117,39 @@ public class SecurityConfig {
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12); // Increased strength factor for better security
     }
 
     /**
      * Creates a JWT decoder bean.
+     * Uses the RSA public key for verification.
      *
      * @return the JWT decoder
      */
     @Bean
     public JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withPublicKey(this.publicKey).build();
+        return NimbusJwtDecoder.withPublicKey((RSAPublicKey) this.keyPair.getPublic()).build();
     }
 
     /**
      * Creates a JWT encoder bean.
+     * Uses the RSA key pair for signing.
      *
      * @return the JWT encoder
+     * @throws JOSEException if an error occurs during JWK creation
      */
     @Bean
     public JwtEncoder jwtEncoder() {
-        JWK jwk = new RSAKey.Builder(this.publicKey).privateKey(this.privateKey).build();
+        // Create an RSA key with the key pair and specify the algorithm
+        JWK jwk = new RSAKey.Builder((RSAPublicKey) this.keyPair.getPublic())
+                .privateKey((RSAPrivateKey) this.keyPair.getPrivate())
+                .algorithm(JWSAlgorithm.RS256)
+                .keyID(this.jwtId)
+                .build();
+        
+        // Create a JWK source with the JWK
         JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(jwk));
+        
         return new NimbusJwtEncoder(jwkSource);
     }
 
@@ -133,10 +173,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
-        configuration.setExposedHeaders(Arrays.asList("x-auth-token"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Auth-Token"));
+        configuration.setExposedHeaders(Arrays.asList("X-Auth-Token"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

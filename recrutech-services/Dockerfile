@@ -6,10 +6,12 @@ WORKDIR /app
 COPY pom.xml .
 COPY recrutech-common/pom.xml recrutech-common/
 COPY recrutech-platform/pom.xml recrutech-platform/
+COPY recrutech-auth/pom.xml recrutech-auth/
 
 # Copy source code
 COPY recrutech-common/src recrutech-common/src
 COPY recrutech-platform/src recrutech-platform/src
+COPY recrutech-auth/src recrutech-auth/src
 
 # Build the application
 RUN mvn clean package -DskipTests
