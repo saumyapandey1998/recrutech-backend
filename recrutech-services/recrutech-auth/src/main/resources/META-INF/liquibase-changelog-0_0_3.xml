@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Create refresh_tokens table -->
+    <changeSet id="0.0.3-1" author="auth-service">
+        <createTable tableName="refresh_tokens">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="token" type="VARCHAR(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="token_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="user_id" type="VARCHAR(36)">
+                <constraints nullable="false" foreignKeyName="fk_refresh_token_user" references="users(id)"/>
+            </column>
+            <column name="expiry_date" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revoked" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Add unique index for token with prefix to stay within MySQL key length limits -->
+        <createIndex indexName="idx_refresh_token_token" tableName="refresh_tokens" unique="true">
+            <column name="token(767)"/>
+        </createIndex>
+        
+        <!-- Add index for faster token_id lookup -->
+        <createIndex indexName="idx_refresh_token_token_id" tableName="refresh_tokens">
+            <column name="token_id"/>
+        </createIndex>
+        
+        <!-- Add index for faster user_id lookup -->
+        <createIndex indexName="idx_refresh_token_user_id" tableName="refresh_tokens">
+            <column name="user_id"/>
+        </createIndex>
+        
+        <!-- Add index for faster expiry_date lookup -->
+        <createIndex indexName="idx_refresh_token_expiry_date" tableName="refresh_tokens">
+            <column name="expiry_date"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
