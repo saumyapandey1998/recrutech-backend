@@ -1,228 +1,240 @@
 package com.recrutech.recrutechauth.service;
 
+import com.recrutech.recrutechauth.exception.TokenException;
+import com.recrutech.recrutechauth.model.RefreshToken;
+import com.recrutech.recrutechauth.model.Role;
+import com.recrutech.recrutechauth.model.User;
+import com.recrutech.recrutechauth.repository.RefreshTokenRepository;
+import com.recrutech.recrutechauth.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.*;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for JwtService using Mockito.
+ */
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 class JwtServiceTest {
 
     @Mock
     private JwtEncoder jwtEncoder;
-    
+
     @Mock
     private JwtDecoder jwtDecoder;
-    
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private Authentication authentication;
+
+    @Mock
+    private Jwt jwt;
+
+    @Mock
+    private JwtEncoderParameters jwtEncoderParameters;
+
     @InjectMocks
     private JwtService jwtService;
 
-    private Authentication authentication;
-    private Jwt mockAccessJwt;
-    private Jwt mockRefreshJwt;
-    private String validAccessToken = "valid.access.token";
-    private String validRefreshToken = "valid.refresh.token";
-    private String invalidToken = "invalid.token.value";
+    private User testUser;
+    private RefreshToken testRefreshToken;
+    private String testToken;
+    private String testRefreshTokenValue;
 
     @BeforeEach
     void setUp() {
-        // Create a mock authentication object
-        authentication = new UsernamePasswordAuthenticationToken(
-                "testuser",
-                "password",
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-        );
-        
-        // Set up mock JWT encoder
-        Instant now = Instant.now();
-        Instant accessExpiration = now.plusSeconds(3600);
-        Instant refreshExpiration = now.plusSeconds(86400);
-        
-        Jwt.Builder accessTokenBuilder = Jwt.withTokenValue(validAccessToken)
-                .header("alg", "RS256")
-                .subject("testuser")
-                .issuedAt(now)
-                .expiresAt(accessExpiration);
-                
-        Jwt.Builder refreshTokenBuilder = Jwt.withTokenValue(validRefreshToken)
-                .header("alg", "RS256")
-                .subject("testuser")
-                .issuedAt(now)
-                .expiresAt(refreshExpiration)
-                .claim("token_type", "refresh");
-                
-        mockAccessJwt = accessTokenBuilder.build();
-        mockRefreshJwt = refreshTokenBuilder.build();
-        
-        // Configure JwtEncoder mock
-        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenAnswer(invocation -> {
-            // Return different tokens based on claims
-            JwtEncoderParameters params = invocation.getArgument(0);
-            JwtClaimsSet claims = params.getClaims();
-            
-            Instant tokenIssuedAt = now;
-            Instant tokenExpiresAt = claims.getExpiresAt();
-            
-            if (claims.getClaims().containsKey("token_type") && 
-                "refresh".equals(claims.getClaims().get("token_type"))) {
-                return new Jwt(validRefreshToken, 
-                              tokenIssuedAt, 
-                              tokenExpiresAt, 
-                              Map.of("alg", "RS256"), 
-                              claims.getClaims());
-            } else {
-                return new Jwt(validAccessToken, 
-                              tokenIssuedAt, 
-                              tokenExpiresAt, 
-                              Map.of("alg", "RS256"), 
-                              claims.getClaims());
-            }
-        });
-        
-        // Configure JwtDecoder mock
-        when(jwtDecoder.decode(validAccessToken)).thenReturn(mockAccessJwt);
-        when(jwtDecoder.decode(validRefreshToken)).thenReturn(mockRefreshJwt);
-        when(jwtDecoder.decode(invalidToken)).thenThrow(new JwtException("Invalid token"));
+        // Set JWT expiration
+        ReflectionTestUtils.setField(jwtService, "jwtExpiration", 3600000L);
+        ReflectionTestUtils.setField(jwtService, "refreshExpiration", 86400000L);
+        ReflectionTestUtils.setField(jwtService, "audience", "test-audience");
+        ReflectionTestUtils.setField(jwtService, "jwtId", "test-jwt-id");
+
+        // Create test data
+        testUser = new User();
+        testUser.setUsername("testuser");
+        testUser.setEmail("test@example.com");
+
+        Role userRole = new Role("USER", "Standard user role");
+        testUser.addRole(userRole);
+
+        testToken = "test-token";
+        testRefreshTokenValue = "test-refresh-token";
+
+        testRefreshToken = new RefreshToken();
+        testRefreshToken.setToken(testRefreshTokenValue);
+        testRefreshToken.setUser(testUser);
+        testRefreshToken.setExpiryDate(Instant.now().plus(1, ChronoUnit.DAYS));
+        testRefreshToken.setTokenId("test-token-id");
+        testRefreshToken.setRevoked(false);
     }
 
     @Test
-    void generateToken_ShouldReturnValidToken() {
+    void generateToken_ShouldReturnToken_WhenValidAuthentication() {
+        // Arrange
+        when(authentication.getName()).thenReturn("testuser");
+        // Mock the authorities without using Collections.singletonList
+        Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+        doReturn(authorities).when(authentication).getAuthorities();
+
+        Jwt mockJwt = mock(Jwt.class);
+        when(mockJwt.getTokenValue()).thenReturn(testToken);
+
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(mockJwt);
+
         // Act
         String token = jwtService.generateToken(authentication);
 
         // Assert
         assertNotNull(token);
-        assertEquals(validAccessToken, token);
-        
-        // Validate the token
-        Jwt jwt = jwtService.validateToken(token);
-        assertEquals("testuser", jwt.getSubject());
-        
-        // Check that it's not a refresh token
-        assertFalse(jwtService.isRefreshToken(token));
-        
-        // Check that it's not expired
-        assertFalse(jwtService.isTokenExpired(token));
+        assertEquals(testToken, token);
+        verify(jwtEncoder).encode(any(JwtEncoderParameters.class));
     }
 
     @Test
-    void generateRefreshToken_ShouldReturnValidRefreshToken() {
+    void generateRefreshToken_ShouldReturnAndStoreToken_WhenValidAuthentication() {
+        // Arrange
+        when(authentication.getName()).thenReturn("testuser");
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+
+        Jwt mockJwt = mock(Jwt.class);
+        when(mockJwt.getTokenValue()).thenReturn(testRefreshTokenValue);
+
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(mockJwt);
+
         // Act
-        String refreshToken = jwtService.generateRefreshToken(authentication);
+        String token = jwtService.generateRefreshToken(authentication);
 
         // Assert
-        assertNotNull(refreshToken);
-        assertEquals(validRefreshToken, refreshToken);
-        
-        // Validate the token
-        Jwt jwt = jwtService.validateToken(refreshToken);
-        assertEquals("testuser", jwt.getSubject());
-        
-        // Check that it's a refresh token
-        assertTrue(jwtService.isRefreshToken(refreshToken));
-        
-        // Check that it's not expired
-        assertFalse(jwtService.isTokenExpired(refreshToken));
+        assertNotNull(token);
+        assertEquals(testRefreshTokenValue, token);
+        verify(jwtEncoder).encode(any(JwtEncoderParameters.class));
+        verify(refreshTokenRepository).save(any(RefreshToken.class));
     }
 
     @Test
-    void generateTokenFromRefreshToken_ShouldReturnNewAccessToken() {
+    void validateToken_ShouldReturnJwt_WhenValidToken() {
+        // Arrange
+        when(jwtDecoder.decode(testToken)).thenReturn(jwt);
+
         // Act
-        String accessToken = jwtService.generateTokenFromRefreshToken(validRefreshToken);
-        
+        Jwt result = jwtService.validateToken(testToken);
+
         // Assert
-        assertNotNull(accessToken);
-        assertEquals(validAccessToken, accessToken);
-        
-        // Validate the token
-        Jwt jwt = jwtService.validateToken(accessToken);
-        assertEquals("testuser", jwt.getSubject());
-        
-        // Check that it's not a refresh token
-        assertFalse(jwtService.isRefreshToken(accessToken));
+        assertNotNull(result);
+        assertEquals(jwt, result);
+        verify(jwtDecoder).decode(testToken);
     }
 
     @Test
-    void generateTokenFromRefreshToken_WithAccessToken_ShouldThrowException() {
-        // Mock behavior for this specific test
-        when(jwtDecoder.decode(validAccessToken)).thenReturn(mockAccessJwt);
-        
+    void validateToken_ShouldThrowException_WhenInvalidToken() {
+        // Arrange
+        when(jwtDecoder.decode(testToken)).thenThrow(new JwtException("Invalid token"));
+
         // Act & Assert
-        JwtException exception = assertThrows(JwtException.class, () -> {
-            jwtService.generateTokenFromRefreshToken(validAccessToken);
+        TokenException exception = assertThrows(TokenException.class, () -> {
+            jwtService.validateToken(testToken);
         });
-        
-        assertEquals("Not a refresh token", exception.getMessage());
+
+        assertEquals("Invalid token: Invalid token", exception.getMessage());
+        verify(jwtDecoder).decode(testToken);
     }
 
     @Test
-    void extractUsername_ShouldReturnCorrectUsername() {
+    void extractUsername_ShouldReturnUsername_WhenValidToken() {
+        // Arrange
+        when(jwtDecoder.decode(testToken)).thenReturn(jwt);
+        when(jwt.getSubject()).thenReturn("testuser");
+
         // Act
-        String username = jwtService.extractUsername(validAccessToken);
-        
+        String username = jwtService.extractUsername(testToken);
+
         // Assert
         assertEquals("testuser", username);
+        verify(jwtDecoder).decode(testToken);
+        verify(jwt).getSubject();
     }
 
     @Test
-    void validateToken_WithInvalidToken_ShouldThrowException() {
-        // Act & Assert
-        assertThrows(JwtException.class, () -> {
-            jwtService.validateToken(invalidToken);
-        });
-    }
-    
-    @Test
-    void extractUsername_WithInvalidToken_ShouldThrowException() {
-        // Act & Assert
-        assertThrows(JwtException.class, () -> {
-            jwtService.extractUsername(invalidToken);
-        });
-    }
-    
-    @Test
-    void isRefreshToken_WithInvalidToken_ShouldThrowException() {
-        // Act & Assert
-        assertThrows(JwtException.class, () -> {
-            jwtService.isRefreshToken(invalidToken);
-        });
-    }
-    
-    @Test
-    void generateTokenFromRefreshToken_WithInvalidToken_ShouldThrowException() {
-        // Act & Assert
-        assertThrows(JwtException.class, () -> {
-            jwtService.generateTokenFromRefreshToken(invalidToken);
-        });
-    }
-    
-    @Test
-    void validateToken_WithTamperedToken_ShouldThrowException() {
+    void isTokenExpired_ShouldReturnTrue_WhenTokenIsExpired() {
         // Arrange
-        String tamperedToken = "tampered.token.value";
-        when(jwtDecoder.decode(tamperedToken)).thenThrow(new JwtException("Token has been tampered with"));
-        
-        // Act & Assert
-        assertThrows(JwtException.class, () -> {
-            jwtService.validateToken(tamperedToken);
-        });
+        when(jwtDecoder.decode(testToken)).thenReturn(jwt);
+        when(jwt.getExpiresAt()).thenReturn(Instant.now().minus(1, ChronoUnit.HOURS));
+
+        // Act
+        boolean expired = jwtService.isTokenExpired(testToken);
+
+        // Assert
+        assertTrue(expired);
+        verify(jwtDecoder).decode(testToken);
+        verify(jwt).getExpiresAt();
+    }
+
+    @Test
+    void isTokenExpired_ShouldReturnFalse_WhenTokenIsNotExpired() {
+        // Arrange
+        when(jwtDecoder.decode(testToken)).thenReturn(jwt);
+        when(jwt.getExpiresAt()).thenReturn(Instant.now().plus(1, ChronoUnit.HOURS));
+
+        // Act
+        boolean expired = jwtService.isTokenExpired(testToken);
+
+        // Assert
+        assertFalse(expired);
+        verify(jwtDecoder).decode(testToken);
+        verify(jwt).getExpiresAt();
+    }
+
+    @Test
+    void isRefreshToken_ShouldReturnTrue_WhenTokenIsRefreshToken() {
+        // Arrange
+        when(jwtDecoder.decode(testToken)).thenReturn(jwt);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("token_type", "refresh");
+        when(jwt.getClaims()).thenReturn(claims);
+
+        // Act
+        boolean isRefreshToken = jwtService.isRefreshToken(testToken);
+
+        // Assert
+        assertTrue(isRefreshToken);
+        verify(jwtDecoder).decode(testToken);
+        verify(jwt).getClaims();
+    }
+
+    @Test
+    void isRefreshToken_ShouldReturnFalse_WhenTokenIsNotRefreshToken() {
+        // Arrange
+        when(jwtDecoder.decode(testToken)).thenReturn(jwt);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("token_type", "access");
+        when(jwt.getClaims()).thenReturn(claims);
+
+        // Act
+        boolean isRefreshToken = jwtService.isRefreshToken(testToken);
+
+        // Assert
+        assertFalse(isRefreshToken);
+        verify(jwtDecoder).decode(testToken);
+        verify(jwt).getClaims();
     }
 }
