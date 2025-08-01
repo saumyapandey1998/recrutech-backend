@@ -83,7 +83,7 @@ class AuthControllerTest {
         when(authService.register(any(RegisterRequest.class))).thenReturn(authResponse);
 
         // Act & Assert
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerRequest)))
                 .andExpect(status().isOk())
@@ -103,7 +103,7 @@ class AuthControllerTest {
                 .thenThrow(new RegistrationException("Username is already taken"));
 
         // Act & Assert
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerRequest)))
                 .andExpect(status().isBadRequest());
@@ -115,7 +115,7 @@ class AuthControllerTest {
         when(authService.login(any(LoginRequest.class))).thenReturn(authResponse);
 
         // Act & Assert
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -135,7 +135,7 @@ class AuthControllerTest {
                 .thenThrow(new AuthenticationException("Invalid username or password"));
 
         // Act & Assert
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isUnauthorized());
@@ -147,7 +147,7 @@ class AuthControllerTest {
         when(authService.refreshToken(any(String.class))).thenReturn(authResponse);
 
         // Act & Assert
-        mockMvc.perform(post("/auth/refresh")
+        mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(refreshTokenRequest)))
                 .andExpect(status().isOk())
@@ -167,7 +167,7 @@ class AuthControllerTest {
                 .thenThrow(new TokenException("Invalid refresh token"));
 
         // Act & Assert
-        mockMvc.perform(post("/auth/refresh")
+        mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(refreshTokenRequest)))
                 .andExpect(status().isUnauthorized());
