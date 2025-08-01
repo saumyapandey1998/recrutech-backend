@@ -48,20 +48,21 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session -> 
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                    // Öffentliche Endpoints
-                    .requestMatchers("/actuator/health", "/api/v1/jobs").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/jobs/**").permitAll()
-                    // Geschützte Endpoints - nur HR Personal
-                    .requestMatchers(HttpMethod.POST, "/api/v1/jobs").hasRole("HR")
-                    .requestMatchers(HttpMethod.PUT, "/api/v1/jobs/**").hasRole("HR")
-                    .requestMatchers(HttpMethod.DELETE, "/api/v1/jobs/**").hasRole("HR")
-                    .anyRequest().authenticated()
+                        // Öffentliche Endpoints
+                        .requestMatchers("/actuator/health", "/api/v1/jobs").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/jobs/**").permitAll()
+                        // Geschützte Endpoints - nur HR Personal
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/jobs").hasRole("HR")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/jobs/**").hasRole("HR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/jobs/**").hasRole("HR")
+                        .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
-                    .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
     }
 
@@ -75,7 +76,7 @@ public class SecurityConfig {
         // Entferne das "SCOPE_" Prefix und verwende direkt die Authorities
         authoritiesConverter.setAuthorityPrefix("");
         authoritiesConverter.setAuthoritiesClaimName("scope");
-        
+
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
         return converter;
@@ -106,7 +107,7 @@ public class SecurityConfig {
         configuration.setExposedHeaders(Arrays.asList("X-Auth-Token"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
