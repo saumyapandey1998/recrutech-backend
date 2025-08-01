@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.FORBIDDEN.value());
         body.put("error", "Access Denied");
-        body.put("message", "Access denied: USER role is not authorized to perform this operation");
+        body.put("message", "Access denied: Insufficient permissions to perform this operation");
 
         return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
