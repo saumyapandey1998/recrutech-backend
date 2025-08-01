@@ -1,5 +1,7 @@
 package com.recrutech.common.exception;
 
+import java.io.Serial;
+
 /**
  * Exception thrown when a requested resource cannot be found.
  * This exception is used to indicate that the requested entity or resource
@@ -7,6 +9,7 @@ package com.recrutech.common.exception;
  */
 public class NotFoundException extends RuntimeException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
