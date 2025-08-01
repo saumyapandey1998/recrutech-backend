@@ -12,6 +12,8 @@ import com.recrutech.recrutechplatform.repository.JobRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class ApplicationService {
 
@@ -51,6 +53,38 @@ public class ApplicationService {
                 .status(savedApplication.getStatus())
                 .viewedByHr(savedApplication.isViewedByHr())
                 .createdAt(savedApplication.getCreatedAt())
+                .build();
+    }
+
+    public List<ApplicationResponse> getAllApplications() {
+        List<Application> applications = applicationRepository.findAll();
+        return applications.stream()
+                .map(app -> ApplicationResponse.builder()
+                        .id(app.getId())
+                        .jobId(app.getJob().getId())
+                        .cvFileId(app.getCvFileId())
+                        .status(app.getStatus())
+                        .viewedByHr(app.isViewedByHr())
+                        .createdAt(app.getCreatedAt())
+                        .build())
+                .toList();
+    }
+
+    public ApplicationResponse getApplicationById(String applicationId) {
+        // Validate application ID
+        UuidValidator.validateUuid(applicationId, "Application ID");
+
+        // Find application by ID
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new NotFoundException("Application not found with id: " + applicationId));
+        // Return response
+        return ApplicationResponse.builder()
+                .id(application.getId())
+                .jobId(application.getJob().getId())
+                .cvFileId(application.getCvFileId())
+                .status(application.getStatus())
+                .viewedByHr(application.isViewedByHr())
+                .createdAt(application.getCreatedAt())
                 .build();
     }
 }
