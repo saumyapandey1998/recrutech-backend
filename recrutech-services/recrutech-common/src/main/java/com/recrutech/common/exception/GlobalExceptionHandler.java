@@ -12,6 +12,17 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<Object> handleSpringSecurityAccessDeniedException(org.springframework.security.access.AccessDeniedException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.FORBIDDEN.value());
+        body.put("error", "Access Denied");
+        body.put("message", "Access denied: USER role is not authorized to perform this operation");
+
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<Object> handleNotFoundException(NotFoundException ex) {
         Map<String, Object> body = new LinkedHashMap<>();

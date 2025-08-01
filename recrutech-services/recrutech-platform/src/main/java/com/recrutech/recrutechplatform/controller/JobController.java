@@ -25,11 +25,8 @@ public class JobController {
     @PostMapping("/jobs")
     @PreAuthorize("hasRole('HR')")
     @ResponseStatus(HttpStatus.CREATED)
-    public JobResponse createJob(@RequestBody JobRequest jobRequest, 
-                                Authentication authentication) {
-        // Benutzer-Kontext für Audit-Logging
-        String userId = authentication.getName();
-        return jobService.createJob(jobRequest, userId);
+    public JobResponse createJob(@RequestBody JobRequest jobRequest) {
+        return jobService.createJob(jobRequest);
     }
 
     @GetMapping("/jobs")
@@ -49,18 +46,15 @@ public class JobController {
     @DeleteMapping("/jobs/{id}")
     @PreAuthorize("hasRole('HR')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteJob(@PathVariable String id, Authentication authentication) {
-        String userId = authentication.getName();
-        jobService.deleteJobById(id, userId);
+    public void deleteJob(@PathVariable String id) {
+        jobService.deleteJobById(id);
     }
 
     @PutMapping("/jobs/{id}")
     @PreAuthorize("hasRole('HR')")
     @ResponseStatus(HttpStatus.OK)
     public JobResponse updateJob(@PathVariable String id, 
-                               @RequestBody JobRequest jobRequest,
-                               Authentication authentication) {
-        String userId = authentication.getName();
-        return jobService.updateJob(id, jobRequest, userId);
+                               @RequestBody JobRequest jobRequest) {
+        return jobService.updateJob(id, jobRequest);
     }
 }

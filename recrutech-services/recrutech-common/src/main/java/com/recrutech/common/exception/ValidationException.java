@@ -1,5 +1,7 @@
 package com.recrutech.common.exception;
 
+import java.io.Serial;
+
 /**
  * Exception thrown when validation of input data fails.
  * This exception is used to indicate that the provided data does not meet
@@ -7,6 +9,7 @@ package com.recrutech.common.exception;
  */
 public class ValidationException extends RuntimeException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
