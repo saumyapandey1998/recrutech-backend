@@ -1,5 +1,22 @@
 # RecruTech Auth Service
 
+The RecruTech Auth Service handles user authentication and authorization for the RecruTech platform. It provides JWT-based authentication and manages user roles for the entire system.
+
+## Architecture
+
+This service is part of the RecruTech microservice architecture:
+- **Auth Service** (Port 8082): User authentication and JWT tokens (this service)
+- **Platform Service** (Port 8080): Main business logic
+- **MySQL Database** (Port 3307): Auth service data persistence
+- **Infrastructure Services**: MySQL (3306) and MinIO for the Platform Service
+
+## User Roles
+
+The Auth Service manages the following user roles:
+- **APPLICANT**: Can submit and view their own job applications
+- **HR**: Can post jobs and manage applications for their company
+- **ADMIN**: Has all permissions across the system
+
 ## Docker Setup
 
 This service can be run using Docker Compose for easy deployment and development.
@@ -43,9 +60,46 @@ Once started, the auth service will be available at:
 
 ### Authentication Endpoints
 
-- Register: POST http://localhost:8082/api/auth/register
-- Login: POST http://localhost:8082/api/auth/login
-- Refresh Token: POST http://localhost:8082/api/auth/refresh
+The Auth Service provides the following REST endpoints:
+
+#### Register User
+- **POST** `http://localhost:8082/api/auth/register`
+- **Description**: Register a new user account
+- **Request Body**:
+  ```json
+  {
+    "username": "john.doe",
+    "email": "john.doe@example.com",
+    "password": "securePassword123",
+    "role": "APPLICANT"
+  }
+  ```
+- **Response**: User details and JWT token
+
+#### Login
+- **POST** `http://localhost:8082/api/auth/login`
+- **Description**: Authenticate user and receive JWT token
+- **Request Body**:
+  ```json
+  {
+    "username": "john.doe",
+    "password": "securePassword123"
+  }
+  ```
+- **Response**: JWT access token and refresh token
+
+#### Refresh Token
+- **POST** `http://localhost:8082/api/auth/refresh`
+- **Description**: Get a new access token using refresh token
+- **Request Body**:
+  ```json
+  {
+    "refreshToken": "your-refresh-token-here"
+  }
+  ```
+- **Response**: New JWT access token
+
+**Note**: The JWT tokens returned by this service are used to authenticate requests to the Platform Service.
 
 ### Configuration
 
@@ -101,19 +155,40 @@ The application.properties file has been updated to connect to the MySQL service
 
 If you encounter issues:
 
-1. Check the logs:
-   ```
+1. **Check the logs**:
+   ```bash
+   # For MySQL service
    docker-compose logs mysql
+   
+   # For Auth service (if running with Docker)
+   docker-compose logs auth-service
    ```
 
-2. Verify MySQL is running:
-   ```
+2. **Verify services are running**:
+   ```bash
    docker-compose ps
    ```
 
-3. Check if the ports are available:
-   ```
+3. **Check if ports are available**:
+   ```bash
    netstat -an | findstr "3307 8082"
    ```
 
-4. If the service fails to connect to MySQL, you may need to wait a bit longer for MySQL to initialize fully.
+4. **Common Issues**:
+   - **MySQL connection failed**: Wait a bit longer for MySQL to initialize fully
+   - **Port 8082 already in use**: Stop any other services using this port
+   - **JWT token validation errors**: Ensure the Auth Service is running and accessible
+   - **Database schema issues**: Check if Liquibase migrations ran successfully
+
+5. **Reset the service**:
+   ```bash
+   docker-compose down -v
+   docker-compose up -d
+   ```
+   **Warning**: This will delete all user data in the auth database.
+
+## Additional Resources
+
+For complete setup instructions and overall architecture information, see the [main project README](../../README.md).
+
+For Platform Service integration, see the [Platform Service README](../recrutech-platform/README.md).
