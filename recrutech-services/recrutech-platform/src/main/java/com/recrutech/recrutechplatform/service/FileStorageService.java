@@ -11,6 +11,7 @@ import io.minio.http.Method;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -69,6 +70,7 @@ public class FileStorageService {
      * @param file the file to store
      * @return the metadata of the stored file
      */
+    @Transactional
     public FileMetadata storeFile(MultipartFile file) {
         // Validate file
         if (file == null) {
@@ -123,6 +125,7 @@ public class FileStorageService {
      * @param fileId the ID of the file to retrieve
      * @return the file as a Resource
      */
+    @Transactional(readOnly = true)
     public Resource loadFileAsResource(String fileId) {
         try {
             FileMetadata fileMetadata = fileMetadataRepository.findById(fileId)
@@ -147,6 +150,7 @@ public class FileStorageService {
      * @param fileId the ID of the file
      * @return the file metadata
      */
+    @Transactional(readOnly = true)
     public FileMetadata getFileMetadata(String fileId) {
         return fileMetadataRepository.findById(fileId)
                 .orElseThrow(() -> new NotFoundException("File not found with id: " + fileId));
@@ -160,6 +164,7 @@ public class FileStorageService {
      * @param expiryTime the expiry time in seconds
      * @return the presigned URL
      */
+    @Transactional(readOnly = true)
     public String generatePresignedUrl(String fileId, int expiryTime) {
         try {
             FileMetadata fileMetadata = fileMetadataRepository.findById(fileId)

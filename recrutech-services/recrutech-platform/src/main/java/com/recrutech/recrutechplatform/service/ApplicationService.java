@@ -10,6 +10,7 @@ import com.recrutech.recrutechplatform.model.Job;
 import com.recrutech.recrutechplatform.repository.ApplicationRepository;
 import com.recrutech.recrutechplatform.repository.JobRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ApplicationService {
@@ -22,6 +23,7 @@ public class ApplicationService {
         this.jobRepository = jobRepository;
     }
 
+    @Transactional
     public ApplicationResponse createApplication(String jobId, ApplicationRequest request) {
         // Verify job exists
         Job job = jobRepository.findById(jobId)
