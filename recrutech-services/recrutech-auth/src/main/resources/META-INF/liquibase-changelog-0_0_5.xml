@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Insert default HR user -->
+    <changeSet id="0.0.5-1" author="auth-service">
+        <!-- Insert HR user -->
+        <insert tableName="users">
+            <column name="id" value="44444444-4444-4444-4444-444444444444"/>
+            <column name="username" value="hr_admin"/>
+            <column name="email" value="hr@recrutech.com"/>
+            <!-- BCrypt hash for password "HRAdmin123!" with strength 12 -->
+            <column name="password" value="$2a$12$LQv3c1yqBWVHxkd0LQ4bFuWxUVHXVRUaS9TshTWT/Wvg1ufnG2ePa"/>
+            <column name="first_name" value="HR"/>
+            <column name="last_name" value="Administrator"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="account_non_expired" valueBoolean="true"/>
+            <column name="account_non_locked" valueBoolean="true"/>
+            <column name="credentials_non_expired" valueBoolean="true"/>
+            <column name="created_at" valueDate="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- Assign HR role to the HR user -->
+        <insert tableName="user_roles">
+            <column name="user_id" value="44444444-4444-4444-4444-444444444444"/>
+            <column name="role_id" value="33333333-3333-3333-3333-333333333333"/> <!-- HR role ID from 0_0_2.xml -->
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

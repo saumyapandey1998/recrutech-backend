@@ -1,6 +1,7 @@
 package com.recrutech.recrutechauth.service;
 
 import com.recrutech.recrutechauth.dto.AuthResponse;
+import com.recrutech.recrutechauth.dto.HRRegisterRequest;
 import com.recrutech.recrutechauth.dto.LoginRequest;
 import com.recrutech.recrutechauth.dto.RegisterRequest;
 import com.recrutech.recrutechauth.exception.AuthenticationException;
@@ -101,7 +102,6 @@ public class AuthService {
             user.setFirstName(request.getFirstName());
             user.setLastName(request.getLastName());
 
-            // Assign default role (ROLE_USER)
             Set<Role> roles = new HashSet<>();
             Role userRole = roleRepository.findByName("ROLE_USER")
                     .orElseThrow(() -> new RegistrationException("Default role not found"));
@@ -140,6 +140,81 @@ public class AuthService {
             throw e;
         } catch (Exception e) {
             throw new RegistrationException("Registration failed: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Registers a new HR user with automatic HR role assignment.
+     *
+     * @param request the HR registration request
+     * @return the authentication response
+     * @throws RegistrationException if registration fails
+     */
+    @Transactional
+    public AuthResponse registerHR(HRRegisterRequest request) {
+        try {
+            // Validate password
+            List<String> passwordErrors = passwordValidator.validate(request.getPassword());
+            if (!passwordErrors.isEmpty()) {
+                throw new RegistrationException("Password validation failed", passwordErrors);
+            }
+            
+            // Check if username or email already exists
+            if (userRepository.existsByUsername(request.getUsername())) {
+                throw new RegistrationException("Username is already taken");
+            }
+
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new RegistrationException("Email is already in use");
+            }
+
+            // Create new HR user
+            User user = new User();
+            user.setUsername(request.getUsername());
+            user.setEmail(request.getEmail());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setFirstName(request.getFirstName());
+            user.setLastName(request.getLastName());
+
+            // Automatically assign HR role
+            Set<Role> roles = new HashSet<>();
+            Role hrRole = roleRepository.findByName("ROLE_HR")
+                    .orElseThrow(() -> new RegistrationException("HR role not found"));
+            roles.add(hrRole);
+            user.setRoles(roles);
+
+            // Save user
+            userRepository.save(user);
+
+            // Authenticate the new HR user
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // Generate tokens
+            String accessToken = jwtService.generateToken(authentication);
+            String refreshToken = jwtService.generateRefreshToken(authentication);
+
+            // Get user roles
+            String[] userRoles = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .toArray(String[]::new);
+
+            // Build response
+            return AuthResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .tokenType("Bearer")
+                    .expiresIn(jwtExpiration / 1000) // Convert to seconds
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .roles(userRoles)
+                    .build();
+        } catch (RegistrationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RegistrationException("HR registration failed: " + e.getMessage(), e);
         }
     }
 

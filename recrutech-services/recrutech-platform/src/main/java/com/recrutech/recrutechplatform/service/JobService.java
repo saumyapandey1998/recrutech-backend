@@ -54,6 +54,27 @@ public class JobService {
         return mapToJobResponse(savedJob);
     }
 
+    @Transactional
+    public JobResponse createJob(JobRequest jobRequest, String userId) {
+        log.debug("Creating new job with title: {} for user: {}", jobRequest.title(), userId);
+
+        JobValidator.requireNonNull(jobRequest);
+        JobValidator.validateJobData(jobRequest.title(), jobRequest.description(), jobRequest.location());
+
+        Job job = Job.builder()
+                .title(jobRequest.title())
+                .description(jobRequest.description())
+                .location(jobRequest.location())
+                .createdBy(userId) // Benutzer-Zuordnung
+                .active(jobRequest.active() != null ? jobRequest.active() : true)
+                .build();
+
+        Job savedJob = jobRepository.save(job);
+        log.info("Job created by user {} with id: {}", userId, savedJob.getId());
+
+        return mapToJobResponse(savedJob);
+    }
+
     /**
      * Retrieves all jobs with summary information (id, title, location).
      *
@@ -110,6 +131,27 @@ public class JobService {
     }
 
     /**
+     * Deletes a job by its ID with user context.
+     *
+     * @param id the ID of the job to delete
+     * @param userId the ID of the user performing the deletion
+     * @throws ValidationException if the ID is invalid
+     * @throws NotFoundException if the job is not found
+     */
+    @Transactional
+    public void deleteJobById(String id, String userId) {
+        log.debug("Deleting job with id: {} by user: {}", id, userId);
+
+        JobValidator.validateId(id);
+
+        // Verify the job exists before deletion
+        findJobByIdOrThrow(id, "deletion");
+
+        jobRepository.deleteById(id);
+        log.info("Job with id {} deleted successfully by user {}", id, userId);
+    }
+
+    /**
      * Updates a job with the provided details.
      *
      * @param id the ID of the job to update
@@ -141,6 +183,54 @@ public class JobService {
         log.info("Job with id {} updated successfully", id);
 
         return mapToJobResponse(updatedJob);
+    }
+
+    /**
+     * Updates a job with the provided details with user context.
+     *
+     * @param id the ID of the job to update
+     * @param jobRequest the job request containing updated job details
+     * @param userId the ID of the user performing the update
+     * @return the updated job response
+     * @throws ValidationException if the job request or ID is invalid
+     * @throws NotFoundException if the job is not found
+     */
+    @Transactional
+    public JobResponse updateJob(String id, JobRequest jobRequest, String userId) {
+        log.debug("Updating job with id: {} by user: {}", id, userId);
+
+        JobValidator.validateId(id);
+        JobValidator.requireNonNull(jobRequest);
+        JobValidator.validateJobData(jobRequest.title(), jobRequest.description(), jobRequest.location());
+
+        Job job = findJobByIdOrThrow(id, "update");
+
+        // Update job properties
+        job.setTitle(jobRequest.title());
+        job.setDescription(jobRequest.description());
+        job.setLocation(jobRequest.location());
+
+        if (jobRequest.active() != null) {
+            job.setActive(jobRequest.active());
+        }
+
+        Job updatedJob = jobRepository.save(job);
+        log.info("Job with id {} updated successfully by user {}", id, userId);
+
+        return mapToJobResponse(updatedJob);
+    }
+
+    /**
+     * Checks if a user is the owner of a job.
+     *
+     * @param jobId the ID of the job
+     * @param userId the ID of the user
+     * @return true if the user is the owner, false otherwise
+     */
+    public boolean isOwner(String jobId, String userId) {
+        return jobRepository.findById(jobId)
+                .map(job -> job.getCreatedBy() != null && job.getCreatedBy().equals(userId))
+                .orElse(false);
     }
 
     /**

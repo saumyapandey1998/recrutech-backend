@@ -1,6 +1,7 @@
 package com.recrutech.recrutechauth.controller;
 
 import com.recrutech.recrutechauth.dto.AuthResponse;
+import com.recrutech.recrutechauth.dto.HRRegisterRequest;
 import com.recrutech.recrutechauth.dto.LoginRequest;
 import com.recrutech.recrutechauth.dto.RefreshTokenRequest;
 import com.recrutech.recrutechauth.dto.RegisterRequest;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
  * Controller for authentication endpoints.
  */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
@@ -35,6 +36,18 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
+    }
+
+    /**
+     * Endpoint for HR user registration.
+     * This endpoint automatically assigns the HR role to new users.
+     *
+     * @param request the HR registration request
+     * @return the authentication response
+     */
+    @PostMapping("/register/hr")
+    public ResponseEntity<AuthResponse> registerHR(@RequestBody HRRegisterRequest request) {
+        return ResponseEntity.ok(authService.registerHR(request));
     }
 
     /**
