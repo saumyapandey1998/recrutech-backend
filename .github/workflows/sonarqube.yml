@@ -39,9 +39,11 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Start MySQL via Docker Compose
+        working-directory: ./recrutech-services  # ✅ HINZUGEFÜGT
         run: docker compose up -d mysql
 
       - name: Wait for MySQL to be healthy
+        working-directory: ./recrutech-services  # ✅ HINZUGEFÜGT
         run: |
           for i in {1..10}; do
             status=$(docker inspect --format='{{json .State.Health.Status}}' recrutech-mysql)
@@ -54,7 +56,7 @@ jobs:
           done
 
       - name: Build and analyze with SonarCloud
-        # ✅ working-directory entfernt - läuft vom Root für alle Module
+        # ✅ working-directory entfernt - läuft vom Root für Multi-Module-Analyse
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
