@@ -1,7 +1,7 @@
 # RecruTech - Job Application Management System
 
 ## Overview
-RecruTech is a comprehensive job application management system built with a microservice architecture. The platform enables companies to post job listings and applicants to submit and track their applications.
+RecruTech is a comprehensive job application management system built with a microservice architecture. The platform enables companies to post job listings and users to submit and track their applications.
 
 ## Architecture
 The system is currently composed of the following services:
@@ -22,7 +22,7 @@ The system is currently composed of the following services:
 
 ## Authentication
 - User roles:
-  - `APPLICANT`: Submit & view applications
+  - `USER`: Submit & view applications
   - `HR`: Post jobs, manage applications
   - `ADMIN`: All permissions
 - Authentication via JWT (Bearer Token) through custom Auth Service
@@ -87,11 +87,11 @@ If you prefer to run the services without Docker:
    ```bash
    # Build all services
    mvn clean install
-   
+
    # Run Auth Service (in one terminal)
    cd recrutech-services/recrutech-auth
    mvn spring-boot:run
-   
+
    # Run Platform Service (in another terminal)
    cd recrutech-services/recrutech-platform
    mvn spring-boot:run
@@ -116,7 +116,7 @@ If you prefer to run the services without Docker:
 
 #### Application Management
 - `POST /api/v1/jobs/{jobId}/applications` - Submit an application
-- `GET /api/v1/applications/me` - View your applications (Applicant role)
+- `GET /api/v1/applications/me` - View your applications (User role)
 - `GET /api/v1/jobs/{jobId}/applications` - View applications for a job (HR role)
 - `PUT /api/v1/applications/{applicationId}/status` - Update application status (HR role)
 

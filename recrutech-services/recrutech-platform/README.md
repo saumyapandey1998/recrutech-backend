@@ -40,7 +40,7 @@ This service is part of the RecruTech microservice architecture:
    - **From IDE** (recommended for development):
      - Open the project in your IDE
      - Run the `RecrutechPlatformApplication` class
-   
+
    - **From command line**:
      ```bash
      cd recrutech-services/recrutech-platform
@@ -96,7 +96,7 @@ Once running, the Platform Service provides the following endpoints:
 
 ### Application Management
 - `POST /api/v1/jobs/{jobId}/applications` - Submit an application
-- `GET /api/v1/applications/me` - View your applications (Applicant role)
+- `GET /api/v1/applications/me` - View your applications (User role)
 - `GET /api/v1/jobs/{jobId}/applications` - View applications for a job (HR role)
 - `PUT /api/v1/applications/{applicationId}/status` - Update application status (HR role)
 
