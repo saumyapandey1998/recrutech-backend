@@ -54,7 +54,7 @@ jobs:
           done
 
       - name: Build and analyze with SonarCloud
-        working-directory: ./recrutech-platform
+        # ✅ working-directory entfernt - läuft vom Root für alle Module
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
