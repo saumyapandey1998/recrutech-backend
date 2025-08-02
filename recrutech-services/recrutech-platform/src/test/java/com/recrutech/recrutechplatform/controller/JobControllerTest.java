@@ -2,23 +2,24 @@ package com.recrutech.recrutechplatform.controller;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.recrutech.recrutechplatform.controller.JobController;
 import com.recrutech.recrutechplatform.dto.job.JobRequest;
 import com.recrutech.recrutechplatform.dto.job.JobResponse;
 import com.recrutech.recrutechplatform.dto.job.JobSummaryResponse;
+import com.recrutech.common.exception.GlobalExceptionHandler;
 import com.recrutech.common.exception.NotFoundException;
 import com.recrutech.recrutechplatform.service.JobService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -29,18 +30,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
 class JobControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @Mock
     private JobService jobService;
+
+    @InjectMocks
+    private JobController jobController;
 
     private JobRequest jobRequest;
     private JobResponse jobResponse;
@@ -49,6 +49,10 @@ class JobControllerTest {
 
     @BeforeEach
     void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(jobController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+        objectMapper = new ObjectMapper();
         testDateTime = LocalDateTime.now();
 
         jobRequest = new JobRequest(
@@ -98,7 +102,7 @@ class JobControllerTest {
                 "Product Manager",
                 "Munich"
         );
-        List<JobSummaryResponse> jobSummaryResponses = Arrays.asList(jobSummaryResponse, jobSummaryResponse2);
+        List<JobSummaryResponse> jobSummaryResponses = List.of(jobSummaryResponse, jobSummaryResponse2);
 
         when(jobService.findAllJobs()).thenReturn(jobSummaryResponses);
 
@@ -118,7 +122,7 @@ class JobControllerTest {
     @Test
     void getAllJobs_WhenNoJobs_ShouldReturnEmptyList() throws Exception {
         // Arrange
-        when(jobService.findAllJobs()).thenReturn(Collections.emptyList());
+        when(jobService.findAllJobs()).thenReturn(List.of());
 
         // Act & Assert
         mockMvc.perform(get("/api/v1/jobs")

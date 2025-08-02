@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
-@PreAuthorize("hasRole('HR')") // Basis-Berechtigung für alle Endpoints - nur HR Personal
+@PreAuthorize("hasRole('HR')")
 public class JobController {
 
     private final JobService jobService;
@@ -30,14 +30,14 @@ public class JobController {
     }
 
     @GetMapping("/jobs")
-    @PreAuthorize("permitAll()") // Öffentlich zugänglich
+    @PreAuthorize("permitAll()")
     @ResponseStatus(HttpStatus.OK)
     public List<JobSummaryResponse> getAllJobs() {
         return jobService.findAllJobs();
     }
 
     @GetMapping("/jobs/{id}")
-    @PreAuthorize("permitAll()") // Öffentlich zugänglich
+    @PreAuthorize("permitAll()")
     @ResponseStatus(HttpStatus.OK)
     public JobResponse getJobById(@PathVariable String id) {
         return jobService.findJobById(id);
